@@ -79,7 +79,6 @@ StyleCopReport.xml
 *.meta
 *.mp4
 *.msscci
-*.nupkg
 *.nuproj
 *.nuspec
 *.obj
