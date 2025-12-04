@@ -118,13 +118,6 @@ StyleCopReport.xml
 *.xsx
 
 # NuGet Packages (restore them before commit)
-*.nupkg
-*.snupkg
-**/packages/*
-# except build/
-!**/packages/build/
-# Uncomment if NuGet Package Restore is not used
-!packages/repositories.config
 
 # NPM packages
 node_modules/
