@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>API Metrics Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="chart.umd.min.js"></script>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #020617;
+            --bg-card: #020817;
+            --bg-card-soft: #020c1b;
+            --border-subtle: #1f2937;
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56,189,248,0.08);
+            --danger: #f97373;
+            --danger-soft: rgba(248,113,113,0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at top, #0b1120 0, #020617 55%);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+        }
+
+        .shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1.25rem 2.5rem;
+        }
+
+        .page-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: .75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .title {
+            font-size: 1.4rem;
+            font-weight: 650;
+            letter-spacing: .03em;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .title-pill {
+            font-size: .75rem;
+            border-radius: 999px;
+            padding: 0.1rem .55rem;
+            border: 1px solid var(--border-subtle);
+            background: rgba(15,23,42,.8);
+            color: var(--text-muted);
+        }
+
+        .subtitle {
+            font-size: .8rem;
+            color: var(--text-muted);
+        }
+
+        .pill {
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            border-radius: 999px;
+            padding: .25rem .6rem;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+        }
+
+        .pill-dot {
+            width: .4rem;
+            height: .4rem;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34,197,94,.15);
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .35rem;
+        }
+
+        .chip {
+            border-radius: 999px;
+            padding: .1rem .45rem;
+            background: rgba(15,23,42,.85);
+            border: 1px solid rgba(31,41,55,.85);
+            font-size: .68rem;
+            color: var(--text-muted);
+        }
+
+        .grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .grid-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .card {
+            border-radius: 1rem;
+            border: 1px solid var(--border-subtle);
+            background: linear-gradient(145deg, var(--bg-card) 0, var(--bg-card-soft) 80%);
+            box-shadow: 0 18px 45px rgba(15,23,42,.65), 0 0 0 1px rgba(15,23,42,.9);
+            padding: 1rem 1rem 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            margin-bottom: .3rem;
+        }
+
+        .card-title {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .metric-label {
+            font-size: .72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .12em;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: .25rem;
+        }
+
+        .metric-secondary {
+            font-size: .75rem;
+            color: var(--text-muted);
+            margin-top: .15rem;
+        }
+
+        .metric-accent {
+            color: var(--accent);
+        }
+
+        .metric-danger {
+            color: var(--danger);
+        }
+
+        .muted {
+            color: var(--text-muted);
+            font-size: .75rem;
+        }
+
+        .chart-wrapper {
+            height: 260px;
+        }
+
+        .sparkle {
+            position: absolute;
+            inset: auto -40%;
+            height: 3px;
+            background: radial-gradient(circle at 0, rgba(56,189,248,.0) 0, rgba(56,189,248,.6) 20%, rgba(56,189,248,0) 60%);
+            opacity: .7;
+            pointer-events: none;
+            transform: translateY(-4px);
+        }
+
+        .table-wrapper {
+            max-height: 280px;
+            overflow: auto;
+            border-radius: .75rem;
+            border: 1px solid rgba(31,41,55,.9);
+            background: rgba(15,23,42,.7);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .75rem;
+        }
+
+        thead {
+            background: rgba(15,23,42,.9);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        th, td {
+            padding: .45rem .6rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(31,41,55,1);
+            cursor: pointer;
+        }
+
+        td {
+            border-bottom: 1px solid rgba(15,23,42,.85);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(15,23,42,.85);
+        }
+
+        .tag {
+            border-radius: 999px;
+            padding: .1rem .45rem;
+            border: 1px solid rgba(148,163,184,.5);
+            font-size: .68rem;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: .25rem;
+        }
+
+        .tag-dot {
+            width: .35rem;
+            height: .35rem;
+            border-radius: 999px;
+        }
+
+            .tag-dot.ok {
+                background: #22c55e;
+            }
+
+            .tag-dot.warn {
+                background: #facc15;
+            }
+
+            .tag-dot.bad {
+                background: #f97373;
+            }
+
+        .errors-list {
+            display: flex;
+            flex-direction: column;
+            gap: .4rem;
+            max-height: 260px;
+            overflow: auto;
+            padding-right: .25rem;
+        }
+
+        .error-item {
+            border-radius: .75rem;
+            border: 1px solid rgba(248,113,113,.22);
+            background: radial-gradient(circle at 0 0, var(--danger-soft) 0, transparent 55%);
+            padding: .55rem .6rem .45rem;
+            font-size: .78rem;
+        }
+
+        .error-header {
+            display: flex;
+            justify-content: space-between;
+            gap: .5rem;
+            margin-bottom: .15rem;
+        }
+
+        .error-meta {
+            font-size: .7rem;
+            color: var(--text-muted);
+        }
+
+        .error-endpoint {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: .72rem;
+            color: #fca5a5;
+            word-break: break-all;
+        }
+
+        .error-message {
+            color: #fecaca;
+            font-size: .76rem;
+            margin-top: .1rem;
+        }
+
+        .error-toggle {
+            border: none;
+            background: transparent;
+            color: var(--accent);
+            font-size: .7rem;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            white-space: nowrap;
+        }
+
+        .stacktrace {
+            margin-top: .35rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: .7rem;
+            white-space: pre-wrap;
+            background: rgba(15,23,42,.9);
+            border-radius: .5rem;
+            padding: .4rem .45rem;
+            border: 1px solid rgba(15,23,42,.9);
+            color: #e5e7eb;
+        }
+
+        .footer-text {
+            margin-top: 1.4rem;
+            font-size: .68rem;
+            color: var(--text-muted);
+            opacity: .75;
+        }
+
+        .code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+    </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="page-header">
+      <div>
+        <div class="title">
+          API Metrics
+          <span class="title-pill">embedded observability</span>
+        </div>
+        <div class="subtitle">
+          Live request volume, latency and failure diagnostics across your ASP.NET Core API.
+        </div>
+      </div>
+      <div class="chips">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          Live polling
+        </div>
+        <div class="chip">Refresh: <span id="refresh-interval-label">5s</span></div>
+      </div>
+    </header>
+
+    <section class="grid grid-3" style="margin-bottom:1.1rem;">
+      <article class="card">
+        <div class="sparkle"></div>
+        <div class="metric-label">Total Requests</div>
+        <div id="totalRequests" class="metric-value">0</div>
+        <div class="metric-secondary">All endpoints since app start.</div>
+      </article>
+      <article class="card">
+        <div class="metric-label">Success</div>
+        <div id="totalSuccess" class="metric-value metric-accent">0</div>
+        <div class="metric-secondary"><span id="successRate" class="metric-accent">0%</span> success rate</div>
+      </article>
+      <article class="card">
+        <div class="metric-label">Failures</div>
+        <div id="totalFailed" class="metric-value metric-danger">0</div>
+        <div class="metric-secondary"><span id="failureRate" class="metric-danger">0%</span> error rate</div>
+      </article>
+    </section>
+
+    <section class="grid grid-2">
+      <article class="card">
+        <div class="card-header">
+          <div class="card-title">API Summary</div>
+          <span class="muted" id="endpoint-count-label">0 endpoints</span>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th data-sort="endpoint">Endpoint</th>
+                <th data-sort="method">Method</th>
+                <th data-sort="total">Total</th>
+                <th data-sort="avg">Avg (ms)</th>
+                <th data-sort="p95">P95 (ms)</th>
+                <th data-sort="err">Error %</th>
+                <th data-sort="lastError">Last Error</th>
+              </tr>
+            </thead>
+            <tbody id="apiTableBody">
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <div class="card-title">Status Codes (All Endpoints)</div>
+          <span class="muted">Per-code distribution</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="statusCodeChart"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid grid-2" style="margin-top:1rem;">
+      <article class="card">
+        <div class="card-header">
+          <div class="card-title">Requests per Endpoint</div>
+          <span class="muted">Call volume</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="endpointChart"></canvas>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Failures</div>
+          <span class="muted">Newest first · limited</span>
+        </div>
+        <div id="errorsContainer" class="errors-list">
+          <div class="muted">No failures recorded yet. Cause an error to see it here.</div>
+        </div>
+      </article>
+    </section>
+
+    <section style="margin-top:1.5rem;">
+      <article class="card">
+        <div class="card-header">
+          <div class="card-title">Notes</div>
+        </div>
+        <p class="muted" style="margin-top:.25rem;">
+          This dashboard is backed by in-memory diagnostics plus Prometheus-compatible counters and histograms. It is ideal
+          for local, QA and internal troubleshooting without needing external infrastructure.
+        </p>
+        <p class="muted" style="margin-top:.4rem;">
+          For long-term retention and alerting, you can scrape the same metrics via the <span class="code">/metrics</span> endpoint
+          into Prometheus and visualize them in Grafana.
+        </p>
+        <p class="muted" style="margin-top:.4rem;">
+          Sensitive query parameters and headers are masked according to <span class="code">ApiStatsOptions</span>, and non-essential
+          endpoints (dashboard, favicon, etc.) can be excluded from collection.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    let endpointChart;
+    let statusCodeChart;
+    const REFRESH_INTERVAL_MS = 5000;
+    let sortState = { key: 'total', dir: 'desc' };
+
+    async function fetchData() {
+      try {
+        const res = await fetch('/apiMetricDashboard-data', { cache: 'no-cache' });
+        if (!res.ok) {
+          console.error('Failed to load metrics:', res.status);
+          return;
+        }
+        const data = await res.json();
+        updateDashboard(data);
+      } catch (err) {
+        console.error('Error loading metrics:', err);
+      }
+    }
+
+    function updateDashboard(data) {
+      const total = data.totalRequests || 0;
+      const success = data.totalSuccess || 0;
+      const failed = data.totalFailed || 0;
+
+      document.getElementById('totalRequests').textContent = total;
+      document.getElementById('totalSuccess').textContent = success;
+      document.getElementById('totalFailed').textContent = failed;
+
+      let successRate = 0, failureRate = 0;
+      if (total > 0) {
+        successRate = (success / total) * 100;
+        failureRate = (failed / total) * 100;
+      }
+      document.getElementById('successRate').textContent = successRate.toFixed(1) + '%';
+      document.getElementById('failureRate').textContent = failureRate.toFixed(1) + '%';
+
+      const endpoints = data.endpoints || [];
+      document.getElementById('endpoint-count-label').textContent =
+        `${endpoints.length} endpoint${endpoints.length === 1 ? '' : 's'}`;
+
+      renderApiTable(endpoints);
+      renderCharts(endpoints);
+      renderErrors(endpoints);
+    }
+
+    function renderApiTable(endpoints) {
+      const tbody = document.getElementById('apiTableBody');
+      tbody.innerHTML = '';
+
+      const rows = endpoints.map(e => {
+        const total = e.totalRequests || 0;
+        const failed = e.failedRequests || 0;
+        const avg = e.averageDurationMs || 0;
+        const p95 = e.p95DurationMs || 0;
+        const lastErrorTime = (e.recentErrors && e.recentErrors.length > 0)
+          ? e.recentErrors[e.recentErrors.length - 1].utcTime
+          : null;
+        const errorRate = total > 0 ? (failed / total) * 100 : 0;
+        return {
+          endpoint: e.endpoint,
+          method: e.method || 'ANY',
+          total,
+          avg,
+          p95,
+          errorRate,
+          lastErrorTime
+        };
+      });
+
+      rows.sort((a, b) => {
+        const dir = sortState.dir === 'asc' ? 1 : -1;
+        switch (sortState.key) {
+          case 'endpoint': return a.endpoint.localeCompare(b.endpoint) * dir;
+          case 'method': return a.method.localeCompare(b.method) * dir;
+          case 'total': return (a.total - b.total) * dir;
+          case 'avg': return (a.avg - b.avg) * dir;
+          case 'p95': return (a.p95 - b.p95) * dir;
+          case 'err': return (a.errorRate - b.errorRate) * dir;
+          case 'lastError':
+            if (!a.lastErrorTime && !b.lastErrorTime) return 0;
+            if (!a.lastErrorTime) return 1 * dir;
+            if (!b.lastErrorTime) return -1 * dir;
+            return (new Date(a.lastErrorTime) - new Date(b.lastErrorTime)) * dir;
+          default: return 0;
+        }
+      });
+
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+
+        const errClass = r.errorRate > 30 ? 'bad' : r.errorRate > 5 ? 'warn' : 'ok';
+        const errBadgeLabel = r.errorRate.toFixed(1) + '%';
+
+        const lastErrLabel = r.lastErrorTime
+          ? new Date(r.lastErrorTime).toISOString().replace('T',' ').replace('Z',' UTC')
+          : '—';
+
+        tr.innerHTML = `
+          <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis;" title="${r.endpoint}">${r.endpoint}</td>
+          <td>${r.method}</td>
+          <td>${r.total}</td>
+          <td>${r.avg.toFixed(1)}</td>
+          <td>${r.p95.toFixed(1)}</td>
+          <td>
+            <span class="tag">
+              <span class="tag-dot ${errClass}"></span>
+              ${errBadgeLabel}
+            </span>
+          </td>
+          <td>${lastErrLabel}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderCharts(endpoints) {
+      const labels = endpoints.map(e => e.endpoint);
+      const counts = endpoints.map(e => e.totalRequests || 0);
+
+      const endpointCtx = document.getElementById('endpointChart').getContext('2d');
+      if (!endpointChart) {
+        endpointChart = new Chart(endpointCtx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Requests',
+              data: counts,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: {
+                ticks: { color: '#9ca3af', maxRotation: 45, minRotation: 0 },
+                grid: { display: false }
+              },
+              y: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(31,41,55,.6)' }
+              }
+            }
+          }
+        });
+      } else {
+        endpointChart.data.labels = labels;
+        endpointChart.data.datasets[0].data = counts;
+        endpointChart.update();
+      }
+
+      const statusMap = {};
+      endpoints.forEach(e => {
+        if (!e.statusCodeCounts) return;
+        for (const code in e.statusCodeCounts) {
+          statusMap[code] = (statusMap[code] || 0) + e.statusCodeCounts[code];
+        }
+      });
+
+      const statusLabels = Object.keys(statusMap);
+      const statusCounts = Object.values(statusMap);
+
+      const statusCtx = document.getElementById('statusCodeChart').getContext('2d');
+      if (!statusCodeChart) {
+        statusCodeChart = new Chart(statusCtx, {
+          type: 'doughnut',
+          data: {
+            labels: statusLabels,
+            datasets: [{
+              data: statusCounts,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: '#e5e7eb', boxWidth: 12 }
+              }
+            },
+            cutout: '55%'
+          }
+        });
+      } else {
+        statusCodeChart.data.labels = statusLabels;
+        statusCodeChart.data.datasets[0].data = statusCounts;
+        statusCodeChart.update();
+      }
+    }
+
+    function renderErrors(endpoints) {
+      const errorsContainer = document.getElementById('errorsContainer');
+      errorsContainer.innerHTML = '';
+
+      const allErrors = [];
+      endpoints.forEach(e => {
+        (e.recentErrors || []).forEach(err => {
+          allErrors.push({ endpoint: e.endpoint, method: e.method || 'ANY', ...err });
+        });
+      });
+
+      if (allErrors.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = 'No failures recorded yet. Cause an error to see it here.';
+        errorsContainer.appendChild(empty);
+        return;
+      }
+
+      allErrors.sort((a, b) => new Date(b.utcTime) - new Date(a.utcTime));
+
+      allErrors.slice(0, 40).forEach(err => {
+        const item = document.createElement('div');
+        item.className = 'error-item';
+
+        const header = document.createElement('div');
+        header.className = 'error-header';
+
+        const left = document.createElement('div');
+        const time = new Date(err.utcTime);
+        const timeLabel = time.toISOString().replace('T', ' ').replace('Z', ' UTC');
+
+        left.innerHTML = `
+          <div class="error-meta">${timeLabel}</div>
+          <div class="error-endpoint">${err.method} ${err.endpoint}</div>
+        `;
+
+        const right = document.createElement('div');
+        const toggle = document.createElement('button');
+        toggle.className = 'error-toggle';
+        toggle.type = 'button';
+        toggle.textContent = 'View stack trace';
+        right.appendChild(toggle);
+
+        header.appendChild(left);
+        header.appendChild(right);
+
+        const msg = document.createElement('div');
+        msg.className = 'error-message';
+        msg.textContent = err.message || '(no message)';
+
+        const stack = document.createElement('pre');
+        stack.className = 'stacktrace';
+        stack.textContent = err.stackTrace || '(no stack trace)';
+        stack.style.display = 'none';
+
+        toggle.addEventListener('click', () => {
+          const visible = stack.style.display !== 'none';
+          stack.style.display = visible ? 'none' : 'block';
+          toggle.textContent = visible ? 'View stack trace' : 'Hide stack trace';
+        });
+
+        item.appendChild(header);
+        item.appendChild(msg);
+        item.appendChild(stack);
+
+        errorsContainer.appendChild(item);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.getAttribute('data-sort');
+          if (sortState.key === key) {
+            sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortState.key = key;
+            sortState.dir = 'desc';
+          }
+          fetchData();
+        });
+      });
+    });
+
+    document.getElementById('refresh-interval-label').textContent = (REFRESH_INTERVAL_MS / 1000) + 's';
+
+    fetchData();
+    setInterval(fetchData, REFRESH_INTERVAL_MS);
+  </script>
+</body>
+</html>

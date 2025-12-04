@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>ApiStats.Dashboard</PackageId>
+    <Version>1.1.0</Version>
+    <Authors>YourName</Authors>
+    <Description>Embedded API Metrics Dashboard Prometheus metrics for ASP.NET Core.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ASP.NET Core framework types -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Prometheus metrics -->
+    <PackageReference Include="prometheus-net.AspNetCore" Version="6.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embedded dashboard HTML -->
+    <EmbeddedResource Include="UI\api-metric-dashboard-v2.html" />
+  </ItemGroup>
+
+</Project>
