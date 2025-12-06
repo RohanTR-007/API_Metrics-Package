@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Prometheus.NetCore</name>
+    </assembly>
+    <members>
+        <member name="T:Prometheus.DiagnosticSourceAdapter">
+            <summary>
+            Monitors all DiagnosticSource events and exposes them as Prometheus counters.
+            The event data is discarded, only the number of occurrences is measured.
+            </summary>
+            <remarks>
+            This is a very coarse data set due to lacking any intelligence on the payload.
+            Users are recommended to make custom adapters with more detail for specific use cases.
+            </remarks>
+        </member>
+        <member name="M:Prometheus.DiagnosticSourceAdapter.StartListening">
+            <summary>
+            Starts listening for DiagnosticSource events and reporting them as Prometheus metrics.
+            Dispose of the return value to stop listening.
+            </summary>
+        </member>
+        <member name="M:Prometheus.DiagnosticSourceAdapter.StartListening(Prometheus.DiagnosticSourceAdapterOptions)">
+            <summary>
+            Starts listening for DiagnosticSource events and reporting them as Prometheus metrics.
+            Dispose of the return value to stop listening.
+            </summary>
+        </member>
+        <member name="F:Prometheus.DiagnosticSourceAdapterOptions.ListenerFilterPredicate">
+            <summary>
+            By default we subscribe to all listeners but this allows you to filter by listener.
+            </summary>
+        </member>
+        <member name="T:Prometheus.EventCounterAdapter">
+            <summary>
+            Monitors all .NET EventCounters and exposes them as Prometheus counters and gauges.
+            </summary>
+            <remarks>
+            Rate-based .NET event counters are transformed into Prometheus gauges indicating count per escond.
+            Incrementing .NET event counters are transformed into Prometheus counters.
+            </remarks>
+        </member>
+        <member name="P:Prometheus.EventCounterAdapterOptions.EventSourceFilterPredicate">
+            <summary>
+            By default we subscribe to event counters from all event sources but this allows you to filter by event source name.
+            </summary>
+        </member>
+        <member name="T:Prometheus.MeterAdapter">
+            <summary>
+            Monitors all .NET Meters and exposes them as Prometheus counters and gauges.
+            </summary>
+            <remarks>
+            </remarks>
+        </member>
+        <member name="P:Prometheus.MeterAdapterOptions.InstrumentFilterPredicate">
+            <summary>
+            By default we subscribe to all meters but this allows you to filter by instrument.
+            </summary>
+        </member>
+    </members>
+</doc>
